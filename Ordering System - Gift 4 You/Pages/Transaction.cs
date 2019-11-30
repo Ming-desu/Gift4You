@@ -14,12 +14,7 @@
         /// <summary>
         /// The list of the customers from the database
         /// </summary>
-        private List<Customer> senders = new List<Customer>();
-
-        /// <summary>
-        /// The list of the customers available less the sender
-        /// </summary>
-        private List<Customer> receivers = new List<Customer>();
+        private List<Customer> customers = new List<Customer>();
 
         /// <summary>
         /// The order id of the current transaction
@@ -51,31 +46,17 @@
         private void LoadCustomers()
         {
             // Gets the records from the database
-            senders = new Customer().Query("SELECT * FROM customers");
+            customers = new Customer().Query("SELECT * FROM customers");
 
             // Add the customers to the container
-            if (senders != null)
-                foreach (var row in senders)
+            if (customers != null)
+            {
+                foreach (var row in customers)
+                {
                     cb_sender.Items.Add(row.name);
-        }
-
-        /// <summary>
-        /// The method that loads the customer into the container less the sender
-        /// </summary>
-        /// <param name="customer_id">The customer id of the sender</param>
-        private void LoadCustomers(int customer_id)
-        {
-            // Creates a dictionary for the parameter to be passed on the query
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
-            parameters.Add("customer_id", customer_id);
-
-            // Gets all of the customers available in the database
-            receivers = new Customer().Query("SELECT * FROM customers WHERE customer_id != @customer_id", parameters);
-
-            // Add the customers to the container
-            if (receivers != null)
-                foreach (var row in receivers)
                     cb_receiver.Items.Add(row.name);
+                }
+            }
         }
 
         /// <summary>
@@ -112,7 +93,7 @@
                 if (order_id == 0)
                 {
                     // Start the transaction
-                    Customer sender = senders[cb_sender.SelectedIndex];
+                    Customer sender = customers[cb_sender.SelectedIndex];
 
                     Order order = new Order();
                     order.Create(sender);
@@ -125,7 +106,7 @@
                 // Add each and every item in the shopping cart into the order_details table in the database
                 foreach (var item in shopping_cart_list.Items)
                 {
-                    Order_Detail order_detail = new Order_Detail() { order_id = order_id, product_code = item.ToString(), customer_id = receivers[cb_receiver.SelectedIndex].customer_id };
+                    Order_Detail order_detail = new Order_Detail() { order_id = order_id, product_code = item.ToString(), customer_id = customers[cb_receiver.SelectedIndex].customer_id };
                     order_detail.Create(order_detail);
                 }
 
@@ -140,15 +121,16 @@
         /// </summary>
         private void Transaction_End()
         {
-            cb_sender.Enabled = true;
-            cb_sender.SelectedItem = null;
-            cb_sender.Items.Clear();
+            if (order_id != 0)
+            {
+                cb_sender.Enabled = true;
+                cb_sender.SelectedItem = null;
 
-            cb_receiver.SelectedItem = null;
-            cb_receiver.Items.Clear();
-            order_id = 0;
+                cb_receiver.SelectedItem = null;
+                order_id = 0;
 
-            new Notification("Transaction ended.").ShowDialog();
+                new Notification("Transaction ended.").ShowDialog();
+            }
         }
 
         /// <summary>
@@ -198,19 +180,6 @@
                 default: break;
             }
         }
-
-        /// <summary>
-        /// The event that will raised when the sender was changed
-        /// </summary>
-        /// <param name="sender">The sender object</param>
-        /// <param name="e">The event itself</param>
-        private void Sender_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            var cb = sender as ComboBox;
-
-            if (cb.SelectedIndex >= 0)
-                LoadCustomers(senders[cb_sender.SelectedIndex].customer_id);
-        } 
 
         #endregion
     }

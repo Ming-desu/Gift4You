@@ -200,7 +200,6 @@
             this.cb_sender.Name = "cb_sender";
             this.cb_sender.Size = new System.Drawing.Size(448, 27);
             this.cb_sender.TabIndex = 19;
-            this.cb_sender.SelectedIndexChanged += new System.EventHandler(this.Sender_SelectedIndexChanged);
             // 
             // pictureBox1
             // 
